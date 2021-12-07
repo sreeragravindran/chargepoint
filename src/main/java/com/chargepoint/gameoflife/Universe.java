@@ -38,10 +38,14 @@ public class Universe {
         createNextGeneration();
     }
 
-
-//    public String display() {
-//
-//    }
+    public void display() {
+        for (int r = 0; r < universe.length; r++) {
+            for (int c = 0; c < universe[r].length; c++) {
+                System.out.print(universe[r][c].toString());
+            }
+            System.out.println();
+        }
+    }
 
     /***
      * Every cell interacts with its eight neighbors, which

@@ -51,9 +51,12 @@ public class Cell {
     }
 
     public void changeState() {
-
         this.currentState = this.newState;
         this.newState = DEAD;
     }
 
+    @Override
+    public String toString() {
+       return " " + currentState + " ";
+    }
 }
