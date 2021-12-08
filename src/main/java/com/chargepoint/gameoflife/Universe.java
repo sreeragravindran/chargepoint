@@ -1,13 +1,21 @@
 package com.chargepoint.gameoflife;
 
+import com.chargepoint.gameoflife.evolution.Evolution;
+import com.chargepoint.gameoflife.evolution.MultiThreadedEvolution;
+import com.chargepoint.gameoflife.evolution.SingleThreadedEvolution;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.stream.Stream;
 
 public class Universe {
 
-    private Cell[][] universe;
+    Cell[][] universe;
+    Evolution evolution;
 
     public Universe(int[][] cells) {
+        // todo: ideally the dependency should be injected
+        this.evolution = new SingleThreadedEvolution();
         // build the Universe
         this.universe = new Cell[cells.length][cells[0].length];
         init(cells);
@@ -35,13 +43,13 @@ public class Universe {
      * creates the next generation of cells based on the rules of the universe :
      */
     public void tick() {
-        createNextGeneration();
+        evolution.evolve(this);
     }
 
     public void display() {
-        for (int r = 0; r < universe.length; r++) {
-            for (int c = 0; c < universe[r].length; c++) {
-                System.out.print(universe[r][c].toString());
+        for (Cell[] cells : universe) {
+            for (Cell cell : cells) {
+                System.out.print(cell.toString());
             }
             System.out.println();
         }
@@ -53,7 +61,7 @@ public class Universe {
      * @param cell
      * @return
      */
-    private Stream<Cell> getNeighbours(Cell cell) {
+    public Stream<Cell> getNeighbours(Cell cell) {
         var currentPosition = cell.getPosition();
         var adjacentPositions = new ArrayList<Position>();
 
@@ -76,40 +84,6 @@ public class Universe {
         return adjacentCells.stream();
     }
 
-    /***
-     * Rules for life and death
-     *      * 1. Any live cell with fewer than two live neighbors dies as if caused by underpopulation.
-     *      * 2. Any live cell with two or three live neighbors lives on to the next generation.
-     *      * 3. Any live cell with more than three live neighbors dies, as if by overcrowding.
-     *      * 4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
-     */
-    private void createNextGeneration() {
-        for (int r = 0; r < universe.length; r++) {
-            for (int c = 0; c < universe[r].length; c++) {
-                // update cell state
-                var cell = universe[r][c];
-                var livingNeighbours = getLivingNeighbours(getNeighbours(cell));
-                if (cell.isAlive()) {
-                    // underpopulation or overcrowding
-                    if (isUnderPopulated(livingNeighbours) || isOverCrowded(livingNeighbours)) {
-                        cell.setToDie();
-                    } else {
-                        cell.setToLive();
-                    }
-                } else if (livingNeighbours == 3)
-                    // reproduction
-                    cell.setToLive();
-            }
-        }
-
-        // apply new state
-        for (int r = 0; r < universe.length; r++) {
-            for (int c = 0; c < universe[r].length; c++) {
-                universe[r][c].changeState();
-            }
-        }
-    }
-
     // helper methods
     private boolean isValid(Position pos) {
         return pos.getRow() >= 0 && pos.getRow() < getRowSize() && pos.getColumn() >= 0 && pos.getColumn() < getColumnSize();
@@ -121,18 +95,6 @@ public class Universe {
 
     private int getColumnSize() {
         return universe[0].length;
-    }
-
-    private boolean isUnderPopulated(long count) {
-        return count < 2;
-    }
-
-    private boolean isOverCrowded(long count) {
-        return count > 3;
-    }
-
-    private long getLivingNeighbours(Stream<Cell> neighbours) {
-        return neighbours.filter(Cell::isAlive).count();
     }
 
 }
